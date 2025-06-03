@@ -2,16 +2,13 @@ import prisma from '$lib/server/prisma';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-  console.log('Fetching categories from DB...');
   const categoriesFromDb = await prisma.category.findMany({
     include: {
       products: true,
     },
   });
-  console.log(`Fetched ${categoriesFromDb.length} categories.`);
 
   const serializableCategories = categoriesFromDb.map(category => {
-    console.log(`Processing category: ${category.id} - ${category.name}`);
     return {
       ...category,
       products: category.products.map(product => {
