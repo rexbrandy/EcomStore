@@ -1,65 +1,131 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// prisma/schema.prisma
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+datasource db {
+  provider = "sqlite" // Or "postgresql", "mysql" etc.
+  url      = env("DATABASE_URL")
+}
 
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
-}
-
+// --- User and Authentication ---
 model User {
-  id        String     @id @default(cuid()) // Or uuid()
+  id        String     @id @default(cuid())
   email     String     @unique
   name      String?
-  password  String     // hashed pword
+  password  String     // Hashed password
   isAdmin   Boolean    @default(false)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  sessions  Session[]  
-  purchases Purchase[] 
+  sessions  Session[]
+  cartItems CartItem[]
+  orders    Order[]
 }
 
 model Session {
-  id        String   @id @default(cuid()) // this will be the cookie value
+  id        String   @id @default(cuid()) // Session ID stored in cookie
   userId    String
   expiresAt DateTime
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   createdAt DateTime @default(now())
 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
+}
+
+// --- Products and Categories ---
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique // "Category can be anything" - admins can create diverse names
+  slug        String    @unique // For user-friendly URLs, generated from name
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products Product[]
 }
 
 model Product {
-  id          String     @id @default(cuid())
-  name        String
-  description String?
-  price       Float
-  image       String?
-  category    String?
-  stock       Int      @default(0)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  purchases   Purchase[]
+  id             String   @id @default(cuid())
+  name           String   // "Product can be anything" - refers to diverse product offerings
+  description    String?
+  price          Decimal  // Use Decimal for currency
+  imageUrl       String?
+  stockQuantity  Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@index([categoryId])
+  @@index([name]) // For searching by product name
 }
 
-model Purchase {
+// --- Shopping Cart ---
+model CartItem {
   id        String   @id @default(cuid())
-  userId    String
-  productId String
   quantity  Int
-  totalAmount Float
-  date      DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
+  addedAt   DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade) // Cascade delete if product is removed
+
+  @@unique([userId, productId]) // A user has one cart item per product; quantity is updated
+  @@index([userId])
+  @@index([productId])
+}
+
+// --- Orders / Purchase History ---
+enum OrderStatus {
+  PENDING     // Order created, awaiting payment
+  PAID        // Payment successful
+  PROCESSING  // Order is being processed
+  SHIPPED     // Order has been shipped
+  DELIVERED   // Order has been delivered
+  CANCELLED   // Order was cancelled
+  REFUNDED    // Order was refunded
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderDate       DateTime    @default(now())
+  totalAmount     Decimal     // Total amount for the order
+  status          OrderStatus @default(PENDING)
+  shippingAddress Json?       // Store as JSON for simplicity, or create a separate Address model
+  billingAddress  Json?       // Store as JSON for simplicity
+  paymentIntentId String?     @unique // For payment gateway transaction reference
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  items OrderItem[] // List of items in this order
 
   @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id              String  @id @default(cuid())
+  quantity        Int
+  priceAtPurchase Decimal // Price of the single item at the time of purchase
+
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict) // Prevent product deletion if it's in an order, or handle appropriately
+
+  @@index([orderId])
   @@index([productId])
 }

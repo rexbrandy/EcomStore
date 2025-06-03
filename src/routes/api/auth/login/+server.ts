@@ -9,13 +9,17 @@ const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
   try {
-    const { email, password } = await request.json();
+    // Change from request.json() to request.formData()
+    const formData = await request.formData();
+    const email = formData.get('email') as string | null;
+    const password = formData.get('password') as string | null;
 
     if (!email || typeof email !== 'string') {
-      throw error(400, 'Email is required.');
+      // Consider sending a more specific error if needed, but this is okay.
+      throw error(400, 'Email is required and must be a valid string.');
     }
     if (!password || typeof password !== 'string') {
-      throw error(400, 'Password is required.');
+      throw error(400, 'Password is required and must be a valid string.');
     }
 
     const user = await prisma.user.findUnique({
@@ -23,6 +27,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     });
 
     if (!user) {
+      // Generic message for security (doesn't reveal if email exists)
       throw error(401, 'Invalid email or password.');
     }
 
@@ -42,21 +47,25 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
     cookies.set(SESSION_COOKIE_NAME, newSession.id, {
       path: '/',
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Ensures cookie is only sent over HTTPS in production
       sameSite: 'lax',
-      maxAge: SESSION_DURATION_MS / 1000, 
+      maxAge: SESSION_DURATION_MS / 1000, // maxAge is in seconds
     });
 
     const { password: _, ...userWithoutPassword } = user;
 
+    // Successfully logged in, session cookie set.
+    // The client-side `enhance` callback will handle this success.
     return json({ message: 'Login successful', user: userWithoutPassword });
 
   } catch (e: any) {
     console.error('Login error:', e);
-    if (e.status && e.body && typeof e.body.message === 'string') {
+    // If it's a SvelteKit error thrown by `error()`, re-throw it
+    if (e && typeof e.status === 'number' && e.body && typeof e.body.message === 'string') {
         throw error(e.status, e.body.message);
     }
-    throw error(500, 'Failed to log in. Please try again later.');
+    // For any other unexpected errors
+    throw error(500, 'Failed to log in due to a server error. Please try again later.');
   }
 };
