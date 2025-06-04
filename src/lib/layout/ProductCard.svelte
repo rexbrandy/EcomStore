@@ -1,5 +1,6 @@
-<script>
+<script lang="ts">
   import Button from "./Button.svelte";
+  import { invalidateAll } from "$app/navigation";
   
   let {
     id,
@@ -10,7 +11,8 @@
     stockQuantity = 0, // Default stock quantity
     // createdAt, // Not typically displayed on a product card
     // updatedAt, // Not typically displayed on a product card
-    category
+    category,
+    user
   } = $props();
 
 
@@ -18,6 +20,42 @@
   let stockStatusColor = $derived(stockQuantity > 0 ? (stockQuantity < 10 ? 'text-yellow-600' : 'text-green-600') : 'text-red-600');
   let defaultImageUrl = "https://via.placeholder.com/300x200?text=No+Image"; // Placeholder image
 
+  async function handleAddToCart() {
+    // Check if user is logged in before attempting to add to cart
+    // This assumes your layout.server.ts correctly populates $page.data.user
+    if (!user) {
+        alert('Please log in to add items to your cart.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/cart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                productId: id,
+                quantity: 1 // Adding one item at a time with this button
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to add item to cart.');
+        }
+
+        const result = await response.json();
+        await invalidateAll();
+        console.log('Item added to cart:', result);
+        alert(`${name} added to cart! Quantity: ${result.quantity}`);
+        // Optionally, you might want to refresh the cart display or show a success toast.
+        // For now, a simple alert.
+    } catch (error: any) {
+        console.error('Error adding to cart:', error);
+        alert(`Error: ${error.message}`);
+    }
+  }
 </script>
 
 <div class="product-card border border-gray-200 rounded-lg shadow-lg overflow-hidden max-w-sm bg-white hover:shadow-xl transition-shadow duration-300 ease-in-out">
@@ -35,7 +73,7 @@
       {category.name}
     </span>
     <h3 class="text-xl font-semibold mb-2 text-gray-800 truncate" title={name}>
-      {name}
+      <a href="/product/{id}">{name}</a>
     </h3>
 
     {#if description}
@@ -55,7 +93,7 @@
 
     <Button
       disabled={stockQuantity === 0}
-      onClick={() => console.log(`Add to cart: ${id} - ${name}`)}
+      onClick={handleAddToCart}
     >
       {stockQuantity > 0 ? 'Add to Cart' : 'Notify Me'}
     </Button>

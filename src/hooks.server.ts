@@ -23,6 +23,7 @@ export const handle: Handle = async ({ event, resolve}) => {
           },
         },
       });
+      console.log(session)
       if (session) {
         if (session.user && session.expiresAt > new Date()) {
           event.locals.user = session.user;

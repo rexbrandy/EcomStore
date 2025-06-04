@@ -14,12 +14,28 @@ export const GET: RequestHandler = async ({ locals }) => {
       where: { userId: locals.user.id },
       include: {
         product: { // Include product details
-          select: { id: true, name: true, price: true, imageUrl: true, stockQuantity: true }
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            imageUrl: true,
+            stockQuantity: true,
+            category: { select: { name: true } } // Select only the name of the category
+          }
         }
       },
       orderBy: { addedAt: 'asc' },
     });
-    return json(cartItems);
+
+    const serializedCartItems = cartItems.map(item => ({
+      ...item, // Copy all existing properties of cart item
+      product: {
+        ...item.product, // Copy all existing properties of product
+        price: item.product.price.toNumber(), // Convert Decimal to number
+      }
+    }));
+
+    return json(serializedCartItems);
   } catch (e) {
     console.error('Failed to fetch cart:', e);
     throw error(500, 'Failed to fetch cart');

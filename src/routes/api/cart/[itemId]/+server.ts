@@ -1,97 +1,79 @@
-// src/routes/api/cart/+server.ts
 import prisma from '$lib/server/prisma';
 import { json, error } from '@sveltejs/kit';
-import type { RequestHandler } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
-// GET current user's cart
-export const GET: RequestHandler = async ({ locals }) => {
+// PUT update quantity of a specific cart item
+export const PUT: RequestHandler = async ({ request, locals, params }) => {
   if (!locals.user) {
-    throw error(401, 'Unauthorized: You must be logged in to view your cart.');
+    throw error(401, 'Unauthorized: You must be logged in to update your cart.');
   }
 
   try {
-    const cartItems = await prisma.cartItem.findMany({
-      where: { userId: locals.user.id },
-      include: {
-        product: { // Include product details
-          select: { id: true, name: true, price: true, imageUrl: true, stockQuantity: true }
-        }
-      },
-      orderBy: { addedAt: 'asc' },
+    const cartItemId = params.itemId;
+    const { quantity } = await request.json();
+    const userId = locals.user.id;
+
+    if (quantity === undefined || typeof quantity !== 'number' || quantity <= 0) {
+      throw error(400, 'Valid quantity is required and must be greater than 0.');
+    }
+
+    const cartItemToUpdate = await prisma.cartItem.findUnique({
+      where: { id: cartItemId },
+      include: { product: true }
     });
-    return json(cartItems);
-  } catch (e) {
-    console.error('Failed to fetch cart:', e);
-    throw error(500, 'Failed to fetch cart');
+
+    if (!cartItemToUpdate || cartItemToUpdate.userId !== userId) {
+      throw error(404, 'Cart item not found or you do not own this item.');
+    }
+
+    if (cartItemToUpdate.product.stockQuantity < quantity) {
+        throw error(400, `Not enough stock for ${cartItemToUpdate.product.name}. Available: ${cartItemToUpdate.product.stockQuantity}`);
+    }
+
+    const updatedCartItem = await prisma.cartItem.update({
+      where: { id: cartItemId },
+      data: { quantity },
+      include: { product: {select: { name: true, price: true, imageUrl: true}}}
+    });
+    return json(updatedCartItem);
+  } catch (e: any) {
+    console.error(`Failed to update cart item ${params.itemId}:`, e);
+    if (e.status) throw e;
+    if (e.code === 'P2025') {
+        throw error(404, 'Cart item not found for updating.');
+    }
+    throw error(500, e.message || `Failed to update cart item ${params.itemId}`);
   }
 };
 
-// POST add an item to the cart or update its quantity
-export const POST: RequestHandler = async ({ request, locals }) => {
+// DELETE remove a specific item from the cart
+export const DELETE: RequestHandler = async ({ locals, params }) => {
   if (!locals.user) {
     throw error(401, 'Unauthorized: You must be logged in to modify your cart.');
   }
 
   try {
-    const { productId, quantity } = await request.json();
+    const cartItemId = params.itemId;
     const userId = locals.user.id;
 
-    if (!productId || typeof productId !== 'string') throw error(400, 'Product ID is required.');
-    if (quantity === undefined || typeof quantity !== 'number' || quantity <= 0) throw error(400, 'Valid quantity is required and must be greater than 0.');
-
-    const product = await prisma.product.findUnique({ where: { id: productId } });
-    if (!product) throw error(404, 'Product not found.');
-    if (product.stockQuantity < quantity) throw error(400, `Not enough stock for ${product.name}. Available: ${product.stockQuantity}`);
-
-
-    const existingCartItem = await prisma.cartItem.findUnique({
-      where: {
-        userId_productId: { userId, productId },
-      },
+    const cartItemToDelete = await prisma.cartItem.findUnique({
+      where: { id: cartItemId },
     });
 
-    let cartItem;
-    if (existingCartItem) {
-      // Update quantity if item already in cart
-      const newQuantity = existingCartItem.quantity + quantity;
-      if (product.stockQuantity < newQuantity) throw error(400, `Not enough stock for ${product.name} to add ${quantity}. Current in cart: ${existingCartItem.quantity}, Available: ${product.stockQuantity}`);
-      cartItem = await prisma.cartItem.update({
-        where: { id: existingCartItem.id },
-        data: { quantity: newQuantity },
-        include: { product: {select: { name: true, price: true, imageUrl: true}}}
-      });
-    } else {
-      // Add new item to cart
-      cartItem = await prisma.cartItem.create({
-        data: {
-          userId,
-          productId,
-          quantity,
-        },
-        include: { product: {select: { name: true, price: true, imageUrl: true}}}
-      });
+    if (!cartItemToDelete || cartItemToDelete.userId !== userId) {
+      throw error(404, 'Cart item not found or you do not own this item.');
     }
-    return json(cartItem, { status: existingCartItem ? 200 : 201 });
-  } catch (e: any) {
-    console.error('Failed to add to cart:', e);
-    if (e.status) throw e;
-    throw error(500, e.message || 'Failed to add item to cart');
-  }
-};
 
-// DELETE clear the entire cart for the user
-export const DELETE: RequestHandler = async ({ locals }) => {
-  if (!locals.user) {
-    throw error(401, 'Unauthorized: You must be logged in to clear your cart.');
-  }
-
-  try {
-    await prisma.cartItem.deleteMany({
-      where: { userId: locals.user.id },
+    await prisma.cartItem.delete({
+      where: { id: cartItemId },
     });
-    return json({ message: 'Cart cleared successfully.' }, { status: 200 });
-  } catch (e) {
-    console.error('Failed to clear cart:', e);
-    throw error(500, 'Failed to clear cart');
+    return json({ message: `Cart item ${cartItemId} removed successfully.` }, { status: 200 });
+  } catch (e: any) {
+    console.error(`Failed to remove cart item ${params.itemId}:`, e);
+    if (e.code === 'P2025') {
+        throw error(404, 'Cart item not found for deletion.');
+    }
+    if (e.status) throw e;
+    throw error(500, `Failed to remove cart item ${params.itemId}`);
   }
 };

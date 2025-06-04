@@ -1,11 +1,14 @@
 <script lang="ts">
-	import '../app.css';
-  import Nav from '$lib/layout/Nav.svelte';
+  import '../app.css'; // Your global CSS
+  import Nav from '$lib/layout/Nav.svelte'; // Assuming your Nav component is here
 
-	let { children } = $props();
+  // `data` here contains { user: ... } from +layout.server.ts
+  let { data, children } = $props(); 
+
 </script>
 
-<Nav />
+<Nav user={data.user} cartItems={data.cartItems} /> 
+
 <div class="mx-auto max-w-7xl py-6">
-  {@render children()}
+  {@render children()} 
 </div>

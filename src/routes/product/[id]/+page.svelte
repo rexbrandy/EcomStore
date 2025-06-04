@@ -1,5 +1,6 @@
 <script lang="ts">
   import { type Snippet } from 'svelte';
+  import Button from '$lib/layout/Button.svelte';
 
   // Define the type for the product based on your Prisma model
   // Assuming Decimal is represented as a number or string in the frontend
@@ -66,21 +67,9 @@
 
         <p class="text-2xl font-semibold text-blue-600">{formatPrice(product.price)}</p>
 
-        {#if product.description}
-          <div>
-            <button
-              onclick={toggleDescription}
-              class="text-sm font-medium text-blue-500 hover:text-blue-700 focus:outline-none py-1"
-            >
-              {showDescription ? 'Hide' : 'Show'} Description
-              <span class="ml-1">{showDescription ? '▲' : '▼'}</span>
-            </button>
-            {#if showDescription}
-              <div class="mt-2 text-sm text-gray-700 bg-gray-50 p-3 rounded-md border border-gray-200 prose max-w-none">
-                {@html product.description} </div>
-            {/if}
-          </div>
-        {/if}
+        <div class="mt-2 text-sm text-gray-900 max-w-none">
+          {@html product.description}
+        </div>
 
         <div>
           {#if product.stockQuantity > 0}
@@ -93,6 +82,13 @@
             </p>
           {/if}
         </div>
+
+        <Button
+          disabled={product.stockQuantity === 0}
+          onClick={() => console.log(`Add to cart: ${product.id} - ${product.name}`)}
+        >
+          {product.stockQuantity > 0 ? 'Add to Cart' : 'Notify Me'}
+        </Button>
 
         {#if children}
           <div class="mt-4">
