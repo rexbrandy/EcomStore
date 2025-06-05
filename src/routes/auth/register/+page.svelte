@@ -34,7 +34,6 @@
     // We only need to define the callback for when the submission is complete.
     return async ({ result, update }) => {
       isLoading = false;
-      console.log(result)
 
       if (result.type === 'failure') {
         // `result.data` should contain the error object from `error(status, message)`

@@ -94,3 +94,5 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     throw error(500, e.message || 'Failed to create product');
   }
 };
+
+

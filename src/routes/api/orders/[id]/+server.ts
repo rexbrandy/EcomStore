@@ -2,6 +2,7 @@
 import prisma from '$lib/server/prisma';
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
+import { OrderStatus } from '@prisma/client';
 
 // GET a specific order by ID (for the logged-in user)
 export const GET: RequestHandler = async ({ locals, params }) => {

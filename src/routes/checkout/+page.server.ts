@@ -2,6 +2,7 @@
 import type { PageServerLoad } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import type { CheckoutCartItem } from '$lib/types'; // Import the new type
+import { goto } from '$app/navigation';
 
 export const load: PageServerLoad = async ({ fetch, locals }) => {
     // 1. Ensure user is logged in
@@ -35,6 +36,7 @@ export const load: PageServerLoad = async ({ fetch, locals }) => {
         if (e instanceof Error && 'status' in e && typeof e.status === 'number') {
             throw e;
         }
+        
         throw error(500, 'An unexpected error occurred while preparing checkout.');
     }
 

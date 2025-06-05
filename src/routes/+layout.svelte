@@ -9,6 +9,6 @@
 
 <Nav user={data.user} cartItems={data.cartItems} /> 
 
-<div class="mx-auto max-w-7xl py-6">
+<div class="mx-auto">
   {@render children()} 
 </div>

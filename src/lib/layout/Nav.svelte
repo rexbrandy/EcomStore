@@ -24,7 +24,7 @@
 </script>
 
 <nav class="bg-white shadow">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  <div class="mx-auto  px-4 sm:px-6 lg:px-8">
     <div class="flex h-16 justify-between">
       <div class="flex items-center">
         <a href="/" class="text-xl font-bold text-gray-900">Ecom Store</a>
@@ -46,7 +46,7 @@
             {/if}
           </Button>
 
-          <Button>Account</Button>
+          <Button onClick={() => goto('/account')}>Account</Button>
           <Button onClick={handleLogout}>Logout</Button>
         {:else}
           <Button style="submit" onClick={() => goto('/auth/login')}>Login</Button>

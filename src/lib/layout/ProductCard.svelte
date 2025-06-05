@@ -47,10 +47,7 @@
 
         const result = await response.json();
         await invalidateAll();
-        console.log('Item added to cart:', result);
         alert(`${name} added to cart! Quantity: ${result.quantity}`);
-        // Optionally, you might want to refresh the cart display or show a success toast.
-        // For now, a simple alert.
     } catch (error: any) {
         console.error('Error adding to cart:', error);
         alert(`Error: ${error.message}`);

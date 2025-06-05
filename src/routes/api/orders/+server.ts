@@ -4,25 +4,74 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { Prisma, OrderStatus } from '@prisma/client'; // For Decimal and Enum
 
-// GET current user's orders
-export const GET: RequestHandler = async ({ locals }) => {
+// GET orders (for current user OR for admin with filters)
+export const GET: RequestHandler = async ({ locals, url }) => {
   if (!locals.user) {
-    throw error(401, 'Unauthorized: You must be logged in to view your orders.');
+    throw error(401, 'Unauthorized: You must be logged in to view orders.');
   }
 
   try {
+    let where: Prisma.OrderWhereInput = {};
+    let take: number | undefined = undefined;
+    let skip: number | undefined = undefined;
+    let page: number = 1;
+    let totalOrders: number = 0;
+    let totalPages: number = 1;
+
+    // Admin-specific filters and pagination
+    if (locals.user.isAdmin) {
+      const statusFilter = url.searchParams.get('status');
+      const searchTerm = url.searchParams.get('search'); // Search by customer email/name or order ID
+      const limit = parseInt(url.searchParams.get('limit') || '10');
+      page = parseInt(url.searchParams.get('page') || '1');
+
+      take = limit;
+      skip = (page - 1) * limit;
+
+      if (statusFilter && Object.values(OrderStatus).includes(statusFilter as OrderStatus)) {
+        where.status = statusFilter as OrderStatus;
+      }
+      if (searchTerm) {
+        where.OR = [
+            { id: { contains: searchTerm } },
+            { user: { email: { contains: searchTerm } } },
+            { user: { name: { contains: searchTerm } } }
+        ];
+      }
+
+      totalOrders = await prisma.order.count({ where });
+      totalPages = Math.ceil(totalOrders / limit);
+    } else {
+      // Regular user can only view their own orders
+      where.userId = locals.user.id;
+      totalOrders = await prisma.order.count({ where }); // Count for regular user
+      totalPages = 1; // Not paginated for regular user
+    }
+
     const orders = await prisma.order.findMany({
-      where: { userId: locals.user.id },
+      where,
       include: {
         items: {
           include: {
-            product: { select: { id: true, name: true, imageUrl: true, description: true } }, // Added description
+            product: { select: { id: true, name: true, imageUrl: true, description: true } },
           },
         },
+        user: { // Include user details for admin view
+            select: { id: true, name: true, email: true }
+        }
       },
       orderBy: { orderDate: 'desc' },
+      take,
+      skip,
     });
-    return json(orders);
+
+    return json({
+      orders: orders,
+      currentPage: page,
+      totalPages: totalPages,
+      totalOrders: totalOrders,
+    });
+
   } catch (e) {
     console.error('Failed to fetch orders:', e);
     throw error(500, 'Failed to fetch orders');
