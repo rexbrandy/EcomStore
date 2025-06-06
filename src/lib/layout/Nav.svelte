@@ -45,6 +45,7 @@
           {#if user.isAdmin}
             <Button onClick={() => goto('/admin')}>Admin</Button>
           {/if}
+          <button onclick="{() => goto('/account')}">Account</button>
           <Button style="secondary" onClick={() => goto('/account')}>Account</Button>
           <Button style="secondary" onClick={handleLogout}>Logout</Button>
         {:else}
