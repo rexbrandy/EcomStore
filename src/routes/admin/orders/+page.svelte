@@ -3,7 +3,7 @@
   import Button from '$lib/layout/Button.svelte';
   import type { AdminOrder } from '$lib/types';
   import { page } from '$app/state';
-  import { OrderStatus } from '@prisma/client';
+  import { ClientOrderStatus } from '$lib/enums';
 	import { getStatusColor, formatOrderStatus, viewOrderDetails } from '$lib/common.js';
 
   let { data } = $props();
@@ -18,8 +18,8 @@
 
   let showUpdateStatusModal = $state(false);
   let selectedOrderIdForStatus: string | null = $state(null);
-  let selectedOrderCurrentStatus: OrderStatus | null = $state(null);
-  let newOrderStatus: OrderStatus | null = $state(null);
+  let selectedOrderCurrentStatus: ClientOrderStatus | null = $state(null);
+  let newOrderStatus: ClientOrderStatus | null = $state(null);
   let isUpdatingStatus = $state(false);
 
 
@@ -55,7 +55,7 @@
     }
   }
 
-  function openUpdateStatusModal(orderId: string, currentStatus: OrderStatus) {
+  function openUpdateStatusModal(orderId: string, currentStatus: ClientOrderStatus) {
     selectedOrderIdForStatus = orderId;
     selectedOrderCurrentStatus = currentStatus;
     newOrderStatus = currentStatus;

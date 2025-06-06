@@ -2,7 +2,7 @@
   import { goto } from '$app/navigation';
   import Button from '$lib/layout/Button.svelte';
   import type { OrderWithItems } from '$lib/types';
-  import { OrderStatus } from '@prisma/client';
+  import { ClientOrderStatus } from '$lib/enums.js';
   import { formatOrderStatus } from '$lib/common';
 
   let { data } = $props();
@@ -10,17 +10,16 @@
   const order = $derived<OrderWithItems>(data.order);
 
   let shippingAddressParsed = $derived(order?.shippingAddress || null); 
-  let billingAddressParsed = $derived(order?.billingAddress || null); 
 
   let statusColor = $derived(() => {
     switch (order?.status) {
-      case OrderStatus.PENDING: return 'bg-yellow-100 text-yellow-800';
-      case OrderStatus.PAID: return 'bg-green-100 text-green-800';
-      case OrderStatus.PROCESSING: return 'bg-blue-100 text-blue-800';
-      case OrderStatus.SHIPPED: return 'bg-indigo-100 text-indigo-800';
-      case OrderStatus.DELIVERED: return 'bg-purple-100 text-purple-800';
-      case OrderStatus.CANCELLED: return 'bg-red-100 text-red-800';
-      case OrderStatus.REFUNDED: return 'bg-gray-100 text-gray-800';
+      case ClientOrderStatus.PENDING: return 'bg-yellow-100 text-yellow-800';
+      case ClientOrderStatus.PAID: return 'bg-green-100 text-green-800';
+      case ClientOrderStatus.PROCESSING: return 'bg-blue-100 text-blue-800';
+      case ClientOrderStatus.SHIPPED: return 'bg-indigo-100 text-indigo-800';
+      case ClientOrderStatus.DELIVERED: return 'bg-purple-100 text-purple-800';
+      case ClientOrderStatus.CANCELLED: return 'bg-red-100 text-red-800';
+      case ClientOrderStatus.REFUNDED: return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   });
@@ -64,11 +63,6 @@
         <p class="text-gray-700">Postcode: {shippingAddressParsed.postalCode}</p>
         <p class="text-gray-700">State: {shippingAddressParsed.postalCode}</p>
       </div>
-
-      {#if billingAddressParsed && JSON.stringify(shippingAddressParsed) !== JSON.stringify(billingAddressParsed)}
-        <h2 class="text-xl font-semibold text-gray-800 mb-4">Billing Address</h2>
-        <pre class="bg-gray-50 p-4 rounded-md text-gray-700 text-sm mb-6">{formatAddress(billingAddressParsed)}</pre>
-      {/if}
 
       <h2 class="text-xl font-semibold text-gray-800 mb-4">Items</h2>
       <div class="space-y-4">

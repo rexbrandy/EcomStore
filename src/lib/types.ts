@@ -1,10 +1,11 @@
-import type { CartItem, Product, User, Category, Order, OrderItem, Session } from '@prisma/client';
-
-export type OrderStatusValue = 'PENDING' | 'PAID' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
+// src/lib/types.ts
+// Changed Order to PrismaOrder here to avoid conflict
+import type { CartItem, Product, User, Order as PrismaOrder, OrderItem as PrismaOrderItem, Session, Category } from '@prisma/client';
+import type { ClientOrderStatus } from './enums'; // <--- NEW IMPORT
 
 export type CartItemWithProduct = CartItem & {
   product: Pick<Product, 'id' | 'name' | 'price' | 'imageUrl' | 'stockQuantity'> & {
-      category: Pick<Category, 'name'>; // Now category is always present if product is there
+      category: Pick<Category, 'name'>;
   };
 };
 
@@ -14,37 +15,46 @@ export type CategoryWithProducts = Category & {
 
 export type CheckoutCartItem = Omit<CartItemWithProduct, 'product'> & {
   product: Omit<CartItemWithProduct['product'], 'price'> & {
-      price: number; // Price as a number, after server-side conversion
+      price: number;
   };
 };
 
-export type OrderWithItems = Order & {
-  totalAmount: number; // Override Decimal for client-side
-  items: (Omit<OrderItem, 'priceAtPurchase'> & { // Omit Decimal price and override
-      priceAtPurchase: number;
-      product: Pick<Product, 'id' | 'name' | 'imageUrl' | 'description'>; // Include description
-  })[];
-  user: Pick<User, 'id' | 'name' | 'email'>; // Include user details
+export type ClientOrderItem = Omit<PrismaOrderItem, 'priceAtPurchase'> & {
+    priceAtPurchase: number;
+    product: Pick<Product, 'id' | 'name' | 'imageUrl' | 'description'>;
 };
 
-export type AdminOrder = Omit<OrderWithItems, 'items' | 'shippingAddress' | 'billingAddress'> & {
-  items: Array<{ productId: string; quantity: number; priceAtPurchase: number; product: Pick<Product, 'name'>; }>; // Simplified product details for table
-  user: Pick<User, 'name' | 'email'>; // Simplified user details for table
-  shippingAddress: object | null; // Still include, but parse on server
-  billingAddress: object | null; // Still include, but parse on server
+export type OrderWithItems = Omit<PrismaOrder, 'totalAmount' | 'shippingAddress' | 'billingAddress' | 'status' | 'items'> & {
+  totalAmount: number;
+  shippingAddress: object | null;
+  billingAddress: object | null;
+  status: ClientOrderStatus;
+  items: ClientOrderItem[];
+  user: Pick<User, 'id' | 'name' | 'email'>;
 };
+
+
+export type AdminOrder = Omit<PrismaOrder, 'totalAmount' | 'shippingAddress' | 'billingAddress' | 'status' | 'items'> & {
+    totalAmount: number;
+    shippingAddress: object | null;
+    billingAddress: object | null;
+    status: ClientOrderStatus;
+    items: Array<{ productId: string; quantity: number; priceAtPurchase: number; product: Pick<Product, 'name'>; }>;
+    user: Pick<User, 'name' | 'email'>;
+};
+
 
 export type PaginatedOrdersResponse = {
-  orders: AdminOrder[]; // Use the AdminOrder type for the list
+  orders: AdminOrder[];
   currentPage: number;
   totalPages: number;
   totalOrders: number;
 };
 
 export type AdminProduct = Pick<Product, 'id' | 'name' | 'description' | 'imageUrl' | 'stockQuantity' | 'createdAt' | 'updatedAt'> & {
-  price: number; // Converted from Decimal
-  categoryId: string; // Foreign key
-  category: Pick<Category, 'id' | 'name'>; // Included category details
+  price: number;
+  categoryId: string;
+  category: Pick<Category, 'id' | 'name'>;
 };
 
 export type PaginatedProductsResponse = {
@@ -55,10 +65,9 @@ export type PaginatedProductsResponse = {
 };
 
 export type AdminUser = Pick<User, 'id' | 'email' | 'name' | 'isAdmin' | 'createdAt' | 'updatedAt'> & {
-  _count: { orders: number; sessions: number }; // Counts included by Prisma
+  _count: { orders: number; sessions: number };
 };
 
-// Paginated response type for GET /api/admin/users
 export type PaginatedUsersResponse = {
   users: AdminUser[];
   currentPage: number;
@@ -66,13 +75,15 @@ export type PaginatedUsersResponse = {
   totalUsers: number;
 };
 
-// Detailed AdminUser type for single user view (from GET /api/admin/users/[id])
 export type AdminUserDetail = Pick<User, 'id' | 'email' | 'name' | 'isAdmin' | 'createdAt' | 'updatedAt'> & {
-  orders: Array<Pick<Order, 'id' | 'orderDate' | 'totalAmount' | 'status'>>; // Simplified order data
-  sessions: Array<Pick<Session, 'id' | 'expiresAt' | 'createdAt'>>; // Simplified session data
+  orders: Array<Omit<PrismaOrder, 'totalAmount' | 'status'> & {
+    totalAmount: number;
+    status: ClientOrderStatus;
+  }>;
+  sessions: Array<Pick<Session, 'id' | 'expiresAt' | 'createdAt'>>;
 };
 
 export type AccountPageData = {
   user: Pick<User, 'id' | 'email' | 'name' | 'createdAt' | 'updatedAt'>;
-  orders: OrderWithItems[]; // Reuse OrderWithItems for consistency, or create a simplified one
+  orders: OrderWithItems[];
 };

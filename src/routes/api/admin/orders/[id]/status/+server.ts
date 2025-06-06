@@ -2,7 +2,7 @@
 import prisma from '$lib/server/prisma';
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { OrderStatus } from '@prisma/client'; // Import the enum
+import { ClientOrderStatus } from '$lib/enums';
 
 // PUT update order status (Admin only)
 export const PUT: RequestHandler = async ({ request, locals, params }) => {
@@ -14,13 +14,13 @@ export const PUT: RequestHandler = async ({ request, locals, params }) => {
     const orderId = params.id;
     const { status } = await request.json();
 
-    if (!status || !Object.values(OrderStatus).includes(status as OrderStatus)) {
-      throw error(400, `Invalid status value. Must be one of: ${Object.values(OrderStatus).join(', ')}`);
+    if (!status || !Object.values(ClientOrderStatus).includes(status as ClientOrderStatus)) {
+      throw error(400, `Invalid status value. Must be one of: ${Object.values(ClientOrderStatus).join(', ')}`);
     }
 
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
-      data: { status: status as OrderStatus },
+      data: { status: status as ClientOrderStatus },
       include: {
          user: { select: { id: true, name: true, email: true } },
          items: { include: { product: {select: {name: true}}}}

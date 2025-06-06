@@ -2,7 +2,7 @@
   import { goto, invalidateAll } from '$app/navigation';
   import Button from '$lib/layout/Button.svelte';
   import type { CheckoutCartItem } from '$lib/types';
-  import { OrderStatus } from '@prisma/client';
+  import { ClientOrderStatus } from '$lib/enums';
 
   let { data } = $props();
 
@@ -73,7 +73,7 @@
             totalAmount: subtotal,
             shippingAddress: shippingAddress,
             billingAddress: sameAsShipping ? shippingAddress : billingAddress,
-            status: OrderStatus.PAID, 
+            status: ClientOrderStatus.PAID, 
             paymentIntentId: `simulated_payment_${Date.now()}`
         };
 

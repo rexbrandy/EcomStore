@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import type { PaginatedOrdersResponse } from '$lib/types'; 
-import { OrderStatus } from '@prisma/client';
+import { ClientOrderStatus } from '$lib/enums';
 
 export const load: PageServerLoad = async ({ fetch, locals, url }) => {
     const page = url.searchParams.get('page') || '1';
@@ -40,7 +40,7 @@ export const load: PageServerLoad = async ({ fetch, locals, url }) => {
         totalOrders: ordersResponse.totalOrders,
         statusFilter: statusFilter,
         searchTerm: searchTerm,
-        orderStatuses: Object.values(OrderStatus), 
+        orderStatuses: Object.values(ClientOrderStatus), 
         user: locals.user
     };
 };

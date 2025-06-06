@@ -9,7 +9,7 @@
   const cartItems = $state<CartItemWithProduct[]>(data.cartItems || []);
 
   let subtotal = $derived(
-    cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+    cartItems.reduce((sum, item) => sum + (Number(item.product.price) * item.quantity), 0)
   );
 
   let totalItems = $derived(cartItems.length);
