@@ -49,6 +49,7 @@
           <Button style="secondary" onClick={() => goto('/account')}>Account</Button>
           <Button style="secondary" onClick={handleLogout}>Logout</Button>
         {:else}
+          <button onclick="{() => goto('/account')}">Account</button>
           <Button style="submit" onClick={() => goto('/auth/login')}>Login</Button>
           <Button style="secondary" onClick={() => goto('/auth/register')}>Register</Button>
         {/if}
