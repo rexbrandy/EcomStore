@@ -1,4 +1,3 @@
-<!-- src/routes/admin/orders/+page.svelte -->
 <script lang="ts">
   import { invalidate, goto } from '$app/navigation';
   import Button from '$lib/layout/Button.svelte';
@@ -25,7 +24,6 @@
 
 
   $effect(() => {
-    // If the load function loads again this will update all the $state() objs
     orders = data.orders;
     currentPage = data.currentPage;
     totalPages = data.totalPages;
@@ -60,7 +58,7 @@
   function openUpdateStatusModal(orderId: string, currentStatus: OrderStatus) {
     selectedOrderIdForStatus = orderId;
     selectedOrderCurrentStatus = currentStatus;
-    newOrderStatus = currentStatus; // Default to current status
+    newOrderStatus = currentStatus;
     showUpdateStatusModal = true;
   }
 
@@ -89,7 +87,7 @@
 
       alert('Order status updated successfully!');
       closeUpdateStatusModal();
-      await invalidate('/api/orders'); // Invalidate to re-fetch orders list with updated status
+      await invalidate('/api/orders');
     } catch (error: any) {
       console.error('Error updating order status:', error);
       alert(`Error: ${error.message}`);
@@ -104,7 +102,6 @@
     <h1 class="text-3xl font-bold">Manage Orders ({totalOrders} total)</h1>
   </div>
 
-  <!-- Filters and Search -->
   <div class="mb-6 bg-gray-50 p-4 rounded-lg flex flex-wrap gap-4 items-end">
     <div class="flex-1 min-w-[200px]">
       <label for="search" class="block text-sm font-medium text-gray-700">Search Orders</label>
@@ -127,10 +124,10 @@
       </select>
     </div>
     <div>
-      <Button onClick={() => applyFiltersAndPagination()}>Apply Filters</Button>
+      <Button style="submit" onClick={() => applyFiltersAndPagination()}>Apply Filters</Button>
     </div>
     <div>
-      <Button onClick={() => {
+      <Button style="secondary" onClick={() => {
         searchTerm = '';
         statusFilter = '';
         applyFiltersAndPagination();
@@ -170,9 +167,8 @@
               </td>
               <td class="py-3 px-4 text-sm text-gray-700">{order.items.reduce((sum, item) => sum + item.quantity, 0)}</td>
               <td class="py-3 px-4 space-x-2 flex">
-                <Button onClick={() => viewOrderDetails(order.id)}>View</Button>
-                <!-- Update Status button -->
-                <Button onClick={() => openUpdateStatusModal(order.id, order.status)}>Update Status</Button>
+                <Button style="submit" onClick={() => viewOrderDetails(order.id)}>View</Button>
+                <Button style="secondary" onClick={() => openUpdateStatusModal(order.id, order.status)}>Update Status</Button>
               </td>
             </tr>
           {/each}
@@ -181,7 +177,6 @@
     </table>
   </div>
 
-  <!-- Pagination Controls -->
   {#if totalPages > 1}
     <div class="mt-6 flex justify-between items-center">
       <Button onClick={() => goToPage(currentPage - 1)} disabled={currentPage <= 1}>Previous</Button>
@@ -214,8 +209,8 @@
         </div>
 
         <div class="flex justify-end space-x-3 mt-6">
-          <Button type="button" onClick={closeUpdateStatusModal} disabled={isUpdatingStatus}>Cancel</Button>
-          <Button type="submit" disabled={isUpdatingStatus}>
+          <Button style="secondary" type="button" onClick={closeUpdateStatusModal} disabled={isUpdatingStatus}>Cancel</Button>
+          <Button style="submit" type="submit" disabled={isUpdatingStatus}>
             {#if isUpdatingStatus}
               Updating...
             {:else}

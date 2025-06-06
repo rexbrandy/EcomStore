@@ -12,7 +12,7 @@
   });
 
   async function handleSubmit(event: SubmitEvent) {
-    event.preventDefault(); // Prevent default HTML form submission
+    event.preventDefault();
     isLoading = true;
     errorMessage = null;
 
@@ -23,21 +23,15 @@
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        body: formData, // Send as FormData
+        body: formData, 
       });
 
       const responseData = await response.json();
 
-      if (response.ok) { // Status code 200-299
-        // Login was successful
-        // The cookie is set by the server, and hooks.server.ts will update locals.user.
-        // Invalidate all loaded data to ensure UI reflects the new authentication state.
+      if (response.ok) {
         await invalidateAll();
-        // Navigate to the homepage or dashboard.
         await goto('/', { replaceState: true });
       } else {
-        // Server returned an error (4xx, 5xx)
-        // Your endpoint should return a JSON like { message: "Error details" }
         errorMessage = responseData.message || 'Login failed. Please check your credentials.';
       }
     } catch (error: any) {
@@ -86,7 +80,7 @@
       {/if}
 
       <div>
-        <Button type="submit" disabled={isLoading} class="w-full">
+        <Button style="submit" type="submit" disabled={isLoading} class="w-full">
           {#if isLoading}
             Processing...
           {:else}

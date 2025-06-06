@@ -1,16 +1,15 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
+  import { goto, invalidateAll } from '$app/navigation';
   import Button from './Button.svelte';
-  import type { Product } from '@prisma/client';
 
-  // We now receive the entire `data` object from +layout.svelte
-  let { user, cartItems } = $props(); // Destructure both user and cartItems
-  // Derived state for total cart quantity
+  let { user, cartItems } = $props(); 
+
   let totalCartQuantity = $derived(cartItems.length);
 
   function handleLogout() {
     fetch('/api/auth/logout', { method: 'POST' })
       .then(() => {
+        invalidateAll();
         goto('/auth/login');
       })
       .catch(error => {
@@ -19,7 +18,7 @@
   }
 
   function handleViewCart() {
-    goto('/cart'); // Assuming you'll create a /cart page later
+    goto('/cart');
   }
 </script>
 
@@ -31,11 +30,8 @@
       </div>
       <div class="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4">
         {#if user}
-          <span class="text-sm text-gray-600 hidden md:block">
-            Hi, {user.name}!
-          </span>
-          
-          <Button onClick={handleViewCart} class="relative">
+          <Button style="submit" onClick={handleViewCart} class="relative">
+            <!-- This svg is the cart icon -->
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
             </svg>
@@ -45,12 +41,15 @@
               </span>
             {/if}
           </Button>
-
-          <Button onClick={() => goto('/account')}>Account</Button>
-          <Button onClick={handleLogout}>Logout</Button>
+          
+          {#if user.isAdmin}
+            <Button onClick={() => goto('/admin')}>Admin</Button>
+          {/if}
+          <Button style="secondary" onClick={() => goto('/account')}>Account</Button>
+          <Button style="secondary" onClick={handleLogout}>Logout</Button>
         {:else}
           <Button style="submit" onClick={() => goto('/auth/login')}>Login</Button>
-          <Button onClick={() => goto('/auth/register')}>Register</Button>
+          <Button style="secondary" onClick={() => goto('/auth/register')}>Register</Button>
         {/if}
       </div>
     </div>

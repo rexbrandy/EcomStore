@@ -1,54 +1,45 @@
 <script lang="ts">
-  import { enhance } from '$app/forms';
-  import { goto } from '$app/navigation'; // To redirect to login or show a link
-  import type { SubmitFunction } from '@sveltejs/kit';
-
-  // Component props (optional, if you want to customize messages or redirection from parent)
-  // export let redirectToLoginAfterSuccess = true; // Example prop
+  import { goto } from '$app/navigation';
 
   let isLoading = $state(false);
   let errorMessage = $state<string | null>(null);
-  let successMessage = $state<string | null>(null);
 
   let form = $state({
     name: '',
     email: '',
     password: '',
-    confirmPassword: '' // Added for client-side confirmation
+    confirmPassword: ''
   });
 
-  const handleRegistration: SubmitFunction = async () => {
+  async function handleSubmitUpdate(event: Event) {
+    event.preventDefault();
+
+    if (isLoading) return;
+
     isLoading = true;
-    errorMessage = null;
-    successMessage = null;
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
 
-    if (form.password !== form.confirmPassword) {
-      errorMessage = 'Passwords do not match.';
-      isLoading = false;
-      return ({ update }) => { 
-        update({ reset: false }); // Don't reset form if client-side validation fails
-      };
-    }
-
-    // The actual submission will be handled by `enhance`.
-    // We only need to define the callback for when the submission is complete.
-    return async ({ result, update }) => {
-      isLoading = false;
-
-      if (result.type === 'failure') {
-        // `result.data` should contain the error object from `error(status, message)`
-        errorMessage = result.data?.message || 'Registration failed. Please try again.';
-        update({ reset: false }); // Don't reset form on failure
-      } else if (result.type === 'success') {
-        goto('/auth/login'); 
-        update({ reset: true }); // Reset the form fields
-      } else if (result.type === 'error') {
-        // This handles unexpected errors during the fetch itself, not application errors from the server
-        errorMessage = result.error?.message || 'An unexpected error occurred. Please try again.';
-        update({ reset: false });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update account.');
       }
-    };
-  };
+
+      const updatedUser = await response.json();
+      console.log(updatedUser);
+      alert('Account created successfully!');
+      goto('/auth/login');
+    } catch (error: any) {
+      console.error('Error creating account:', error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      isLoading = false;
+    }
+  }
 </script>
 
 <div class="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
@@ -56,9 +47,7 @@
     <h2 class="text-3xl font-extrabold text-center text-gray-800">Create your Account</h2>
 
     <form
-      method="POST"
-      action="/api/auth/register"
-      use:enhance={handleRegistration}
+      onsubmit={handleSubmitUpdate}
       class="space-y-6"
     >
       <div>

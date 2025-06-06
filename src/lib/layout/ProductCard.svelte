@@ -5,12 +5,10 @@
   let {
     id,
     name,
-    description = "No description available.", // Default description
+    description = "No description available.",
     price,
     imageUrl,
-    stockQuantity = 0, // Default stock quantity
-    // createdAt, // Not typically displayed on a product card
-    // updatedAt, // Not typically displayed on a product card
+    stockQuantity = 0,
     category,
     user
   } = $props();
@@ -18,16 +16,9 @@
 
   let stockStatusText = $derived(stockQuantity > 0 ? (stockQuantity < 10 ? `Low stock (${stockQuantity})` : 'In Stock') : 'Out of Stock');
   let stockStatusColor = $derived(stockQuantity > 0 ? (stockQuantity < 10 ? 'text-yellow-600' : 'text-green-600') : 'text-red-600');
-  let defaultImageUrl = "https://via.placeholder.com/300x200?text=No+Image"; // Placeholder image
+  let defaultImageUrl = "https://via.placeholder.com/300x200?text=No+Image";
 
   async function handleAddToCart() {
-    // Check if user is logged in before attempting to add to cart
-    // This assumes your layout.server.ts correctly populates $page.data.user
-    if (!user) {
-        alert('Please log in to add items to your cart.');
-        return;
-    }
-
     try {
         const response = await fetch('/api/cart', {
             method: 'POST',
@@ -87,12 +78,16 @@
         {stockStatusText}
       </p>
     </div>
-
-    <Button
-      disabled={stockQuantity === 0}
-      onClick={handleAddToCart}
-    >
-      {stockQuantity > 0 ? 'Add to Cart' : 'Notify Me'}
-    </Button>
+    {#if user}
+      <Button
+        style="submit"
+        disabled={stockQuantity === 0}
+        onClick={handleAddToCart}
+      >
+        {stockQuantity > 0 ? 'Add to Cart' : 'Notify Me'}
+      </Button>
+    {:else}
+      <a href="/auth/login" class="text-gray-600">Log in to shop</a>
+    {/if}
   </div>
 </div>

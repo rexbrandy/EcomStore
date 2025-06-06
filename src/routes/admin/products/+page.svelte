@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { invalidate, goto } from '$app/navigation';
+  import { invalidate, goto, invalidateAll } from '$app/navigation';
   import Button from '$lib/layout/Button.svelte';
-  import type { AdminProduct } from '$lib/types'; // Make sure this is correctly imported
-  import { page } from '$app/state'; // To get current URL for pagination/filtering
+  import type { AdminProduct } from '$lib/types'; 
+  import { page } from '$app/state';
 
   let { data } = $props();
 
-  // Reactive states initialized from data prop
   let products = $state<AdminProduct[]>(data.products);
   let categories = $state<Array<{ id: string; name: string; slug: string }>>(data.categories);
   let currentPage = $state(data.currentPage);
@@ -21,7 +20,6 @@
   let currentProduct: AdminProduct | null = $state(null);
   let modalTitle = $derived(currentProduct ? 'Edit Product' : 'Add New Product');
 
-  // Form states
   let formName = $state('');
   let formDescription = $state('');
   let formPrice = $state(0.00);
@@ -29,7 +27,6 @@
   let formStockQuantity = $state(0);
   let formCategoryId = $state('');
 
-  // Update reactive states when data changes (e.g. from invalidation)
   $effect(() => {
     products = data.products;
     categories = data.categories;
@@ -96,8 +93,7 @@
 
       alert(`Product ${currentProduct ? 'updated' : 'created'} successfully!`);
       closeAddEditModal();
-      // Invalidate based on a broader pattern to ensure search/filter/sort context is maintained
-      await invalidate((url) => url.pathname === '/api/products'); 
+      await invalidateAll(); 
     } catch (error: any) {
       console.error('Error submitting product:', error);
       alert(`Error: ${error.message}`);
@@ -120,7 +116,7 @@
       }
 
       alert(`Product "${productName}" deleted successfully.`);
-      await invalidate((url) => url.pathname === '/api/products'); // Invalidate with pattern
+      await invalidateAll()
     } catch (error: any) {
       console.error('Error deleting product:', error);
       alert(`Error: ${error.message}`);
@@ -146,27 +142,24 @@
 
   function handleSortChange(newSortBy: string) {
     if (sortBy === newSortBy) {
-      sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'; // Toggle sort order
+      sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'; 
     } else {
       sortBy = newSortBy;
-      sortOrder = 'asc'; // Default to asc when changing sort column
     }
-    applyFiltersAndSort(); // Reset to page 1 on sort change
+    applyFiltersAndSort();
   }
 
-  // Handle Enter key in search input
   function handleSearchKeyDown(event: KeyboardEvent) {
     if (event.key === 'Enter') {
       applyFiltersAndSort();
     }
   }
-
 </script>
 
 <div class="p-6 bg-white rounded-lg shadow-md">
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold">Manage Products ({totalProducts} total)</h1>
-    <Button onClick={openAddModal}>Add New Product</Button>
+    <Button style="submit" onClick={openAddModal}>Add New Product</Button>
   </div>
 
   <div class="mb-6 bg-gray-50 p-4 rounded-lg flex flex-wrap gap-4 items-end">
@@ -191,10 +184,10 @@
       </select>
     </div>
     <div>
-      <Button onClick={() => applyFiltersAndSort()}>Apply Filters</Button>
+      <Button style="submit" onClick={() => applyFiltersAndSort()}>Apply Filters</Button>
     </div>
     <div>
-      <Button onClick={() => {
+      <Button style="secondary" onClick={() => {
         searchTerm = '';
         selectedCategorySlug = '';
         sortBy = 'createdAt';
@@ -250,8 +243,8 @@
                 {/if}
               </td>
               <td class="py-3 px-4 space-x-2 flex">
-                <Button onClick={() => openEditModal(product)}>Edit</Button>
-                <Button onClick={() => handleDeleteProduct(product.id, product.name)}>Delete</Button>
+                <Button style="submit" onClick={() => openEditModal(product)}>Edit</Button>
+                <Button style="secondary" onClick={() => handleDeleteProduct(product.id, product.name)}>Delete</Button>
               </td>
             </tr>
           {/each}
@@ -307,8 +300,8 @@
         </div>
 
         <div class="flex justify-end space-x-3 mt-6">
-          <Button type="button" onClick={closeAddEditModal}>Cancel</Button>
-          <Button type="submit" >{currentProduct ? 'Update Product' : 'Add Product'}</Button>
+          <Button style="secondary" type="button" onClick={closeAddEditModal}>Cancel</Button>
+          <Button style="submit" type="submit" >{currentProduct ? 'Update Product' : 'Add Product'}</Button>
         </div>
       </form>
     </div>

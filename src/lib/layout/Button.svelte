@@ -12,7 +12,7 @@
     children
   }: {
     class?: string;
-    style?: 'default' | 'submit' | 'warning' | 'error';
+    style?: 'default' | 'submit' | 'warning' | 'error' | 'secondary';
     type?: HTMLButtonAttributes['type'];
     onClick?: () => void;
     disabled?: boolean;
@@ -25,7 +25,9 @@
   const styleClasses = $derived.by(() => {
     switch (style) {
       case 'submit':
-        return 'text-white bg-blue-700 hover:bg-blue-800 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800';
+        return 'text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:hover:bg-indigo-700 dark:focus:ring-indigo-800';
+      case 'secondary':
+        return 'text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500';
       case 'warning':
         return 'text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-300 dark:focus:ring-yellow-900';
       case 'error':

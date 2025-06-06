@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { invalidate } from '$app/navigation'; // For invalidating cart data after order
+  import { goto, invalidateAll } from '$app/navigation';
   import Button from '$lib/layout/Button.svelte';
   import type { CheckoutCartItem } from '$lib/types';
-  import { OrderStatus } from '@prisma/client'; // Import OrderStatus enum if needed for display
+  import { OrderStatus } from '@prisma/client';
 
   let { data } = $props();
 
@@ -14,9 +13,8 @@
     cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
   );
 
-  let isPlacingOrder = $state(false); // State for loading indicator
+  let isPlacingOrder = $state(false);
 
-  // Basic Address Form (for demonstration, can be expanded)
   let shippingAddress = $state({
     address1: '',
     address2: '',
@@ -70,14 +68,13 @@
             cartItems: cartItems.map(item => ({
                 productId: item.productId,
                 quantity: item.quantity,
-                priceAtPurchase: item.product.price // Use the number here, API will handle Decimal conversion
+                priceAtPurchase: item.product.price
             })),
             totalAmount: subtotal,
             shippingAddress: shippingAddress,
             billingAddress: sameAsShipping ? shippingAddress : billingAddress,
-            // For simulated payment, status will be PAID immediately
             status: OrderStatus.PAID, 
-            paymentIntentId: `simulated_payment_${Date.now()}` // Dummy ID
+            paymentIntentId: `simulated_payment_${Date.now()}`
         };
 
         const response = await fetch('/api/orders', {
@@ -95,10 +92,8 @@
         alert('Order placed successfully! Thank you for your purchase.');
         console.log('New Order:', newOrder);
 
-        // Invalidate cart to clear it
-        await invalidate('/api/cart'); 
-        // Redirect to a confirmation page or user's order history
-        goto(`/orders/${newOrder.id}`); // Assuming an order details page
+        await invalidateAll(); 
+        goto(`/orders/${newOrder.id}`);
     } catch (error: any) {
         console.error('Error placing order:', error);
         alert(`Error placing order: ${error.message}`);
@@ -225,7 +220,7 @@
             </p>
         </div>
 
-        <Button onClick={handlePlaceOrder} class="mt-8" disabled={isPlacingOrder}>
+        <Button style="submit" onClick={handlePlaceOrder} class="mt-8" disabled={isPlacingOrder}>
           {#if isPlacingOrder}
             Placing Order...
           {:else}

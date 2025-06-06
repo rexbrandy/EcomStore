@@ -27,3 +27,19 @@ export function formatOrderStatus(status: OrderStatus) {
 export function viewOrderDetails(orderId: string) {
   goto(`/orders/${orderId}`);
 }
+
+export function emailIsValid(email: string) {
+  return /^\S+@\S+\.\S+$/.test(email)
+}
+
+export const PWORD_SALT_ROUNDS = 10;
+
+export function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}

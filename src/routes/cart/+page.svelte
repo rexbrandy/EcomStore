@@ -16,7 +16,6 @@
 
   async function updateQuantity(cartItemId: string, newQuantity: number) {
     if (newQuantity <= 0) {
-      // If new quantity is 0 or less, remove the item
       await removeCartItem(cartItemId);
       return;
     }
@@ -30,9 +29,8 @@
     }
 
     try {
-      // Use the PUT endpoint for direct quantity updates
-      const response = await fetch(`/api/cart/${cartItemId}`, { // Note: endpoint is /api/cart/[itemId]
-        method: 'PUT', // Changed from PATCH to PUT
+      const response = await fetch(`/api/cart/${cartItemId}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quantity: newQuantity }),
       });
@@ -42,7 +40,7 @@
         throw new Error(errorData.message || 'Failed to update quantity.');
       }
 
-      await invalidateAll(); // Re-fetch the cart data
+      await invalidateAll();
     } catch (error: any) {
       console.error('Error updating cart item quantity:', error);
       alert(`Error: ${error.message}`);
@@ -55,7 +53,6 @@
     }
 
     try {
-      // Use the DELETE /api/cart/[itemId] endpoint
       const response = await fetch(`/api/cart/${cartItemId}`, { // Note: endpoint is /api/cart/[itemId]
         method: 'DELETE', 
       });
@@ -65,7 +62,7 @@
         throw new Error(errorData.message || 'Failed to remove item from cart.');
       }
 
-      await invalidateAll();; // Re-fetch the cart data
+      await invalidateAll();
     } catch (error: any) {
       console.error('Error removing cart item:', error);
       alert(`Error: ${error.message}`);
@@ -78,7 +75,6 @@
     }
 
     try {
-      // Use the DELETE /api/cart endpoint
       const response = await fetch('/api/cart', {
         method: 'DELETE',
       });
@@ -88,7 +84,7 @@
         throw new Error(errorData.message || 'Failed to clear cart.');
       }
 
-      await invalidateAll();; // Re-fetch the cart data
+      await invalidateAll();
       alert('Your cart has been cleared!');
     } catch (error: any) {
       console.error('Error clearing cart:', error);
@@ -104,7 +100,7 @@
   {#if cartItems.length === 0}
     <div class="text-center py-12">
       <p class="text-xl text-gray-600 mb-4">Your cart is empty.</p>
-      <Button onClick={() => goto('/')}>Continue Shopping</Button>
+      <Button style="submit" onClick={() => goto('/')}>Continue Shopping</Button>
     </div>
   {:else}
     <div class="bg-white shadow-md rounded-lg p-6 mb-8">
@@ -117,7 +113,7 @@
               {#if item.product.category?.name}
                 <p class="text-gray-600 text-sm">Category: {item.product.category.name}</p>
               {/if}
-              <p class="text-indigo-600 font-bold">${(item.product.price * item.quantity).toFixed(2)}</p>
+              <p class="text-indigo-600 font-bold">${(Number(item.product.price) * item.quantity).toFixed(2)}</p>
             </div>
             <div class="flex items-center space-x-2">
               <Button onClick={() => updateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1}>-</Button>
@@ -129,7 +125,7 @@
                 class="w-16 text-center border rounded-md p-1"
               />
               <Button onClick={() => updateQuantity(item.id, item.quantity + 1)} disabled={item.quantity >= item.product.stockQuantity}>+</Button>
-              <Button style="error" onClick={() => removeCartItem(item.id)}>Remove</Button>
+              <Button style="secondary" onClick={() => removeCartItem(item.id)}>Remove</Button>
             </div>
           </div>
         {/each}
@@ -146,8 +142,8 @@
         <span>${subtotal.toFixed(2)}</span>
       </div>
       <div class="flex flex-col sm:flex-row gap-4">
-        <Button onClick={() => goto('/checkout')}>Proceed to Checkout</Button>
-        <Button style="warning" onClick={clearCart}>Clear Cart</Button>
+        <Button style="submit" onClick={() => goto('/checkout')}>Proceed to Checkout</Button>
+        <Button style="secondary" onClick={clearCart}>Clear Cart</Button>
       </div>
     </div>
   {/if}

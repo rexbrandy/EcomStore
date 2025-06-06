@@ -1,29 +1,25 @@
 <script lang="ts">
-  import { invalidate, invalidateAll } from '$app/navigation'; // For refreshing data after CUD operations
+  import { invalidateAll } from '$app/navigation';
   import Button from '$lib/layout/Button.svelte';
-  import type { Category } from '@prisma/client'; // Import Prisma's Category type
+  import type { Category } from '@prisma/client';
 
-  let { data } = $props(); // Contains categories data
+  let { data } = $props();
 
-  // Reactive state initialized from data prop
   let categories = $state<Category[]>(data.categories);
 
   let showAddEditModal = $state(false);
   let currentCategory: Category | null = $state(null);
   let modalTitle = $derived(currentCategory ? 'Edit Category' : 'Add New Category');
 
-  // Form states
   let formName = $state('');
   let formDescription = $state('');
 
-  // Update reactive states when data changes (e.g. from invalidation)
   $effect(() => {
     categories = data.categories;
   });
 
   function openAddModal() {
-    currentCategory = null; // Clear for new category
-    // Reset form fields
+    currentCategory = null;
     formName = '';
     formDescription = '';
     showAddEditModal = true;
@@ -31,7 +27,6 @@
 
   function openEditModal(category: Category) {
     currentCategory = category;
-    // Populate form fields with category data
     formName = category.name;
     formDescription = category.description || '';
     showAddEditModal = true;
@@ -43,9 +38,7 @@
 
   async function handleSubmitCategory(event: Event) {
     event.preventDefault();
-    const method = currentCategory ? 'PUT' : 'POST';
-    // PUT /api/categories/id/[id]
-    // POST /api/categories
+    const method = currentCategory ? 'PUT' : 'POST'; // Update || Create
     const url = currentCategory ? `/api/categories/id/${currentCategory.id}` : '/api/categories';
 
     const categoryData = {
@@ -101,7 +94,7 @@
 <div class="p-6 bg-white rounded-lg shadow-md">
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold">Manage Categories</h1>
-    <Button onClick={openAddModal}>Add New Category</Button>
+    <Button style="submit" onClick={openAddModal}>Add New Category</Button>
   </div>
 
   <div class="overflow-x-auto">
@@ -128,8 +121,8 @@
               <td class="py-3 px-4 text-sm text-gray-700">{category.slug}</td>
               <td class="py-3 px-4 text-sm text-gray-700">{category.description || 'N/A'}</td>
               <td class="py-3 px-4 space-x-2 flex">
-                <Button onClick={() => openEditModal(category)}>Edit</Button>
-                <Button onClick={() => handleDeleteCategory(category.id, category.name)}>Delete</Button>
+                <Button style="submit" onClick={() => openEditModal(category)}>Edit</Button>
+                <Button style="secondary" onClick={() => handleDeleteCategory(category.id, category.name)}>Delete</Button>
               </td>
             </tr>
           {/each}
@@ -154,8 +147,8 @@
         </div>
 
         <div class="flex justify-end space-x-3 mt-6">
-          <Button type="button" onClick={closeAddEditModal}>Cancel</Button>
-          <Button type="submit" >{currentCategory ? 'Update Category' : 'Add Category'}</Button>
+          <Button style="secondary" type="button" onClick={closeAddEditModal}>Cancel</Button>
+          <Button style="submit" type="submit" >{currentCategory ? 'Update Category' : 'Add Category'}</Button>
         </div>
       </form>
     </div>

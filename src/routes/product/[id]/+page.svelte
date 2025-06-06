@@ -1,14 +1,13 @@
 <script lang="ts">
   import { type Snippet } from 'svelte';
   import Button from '$lib/layout/Button.svelte';
+  import { invalidateAll } from '$app/navigation';
 
-  // Define the type for the product based on your Prisma model
-  // Assuming Decimal is represented as a number or string in the frontend
   type Product = {
     id: string;
     name: string;
     description?: string | null;
-    price: number | string; // Or a more specific Decimal type if you have one
+    price: number | string;
     imageUrl?: string | null;
     stockQuantity: number;
   };
@@ -18,33 +17,52 @@
   };
 
   const {
-    data, // This 'data' prop will contain the object returned from +page.server.ts
+    data,
     addToCart,
     children
   }: {
-    data: PageData; // Specify the type of the 'data' prop
+    data: PageData;
     addToCart?: (product: Product) => void;
     children?: Snippet;
   } = $props();
 
   let product = $state(data.product)
 
-  // Helper to format price (optional, can be done upstream)
   function formatPrice(price: number | string): string {
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-    // Basic currency formatting, adjust as needed (e.g., for specific locales/currencies)
     return `$${numPrice.toFixed(2)}`;
   }
 
   let currentImageUrl = $state(product.imageUrl || 'https://via.placeholder.com/600x400?text=No+Image+Available');
-  let showDescription = $state(false);
 
-  function toggleDescription() {
-    showDescription = !showDescription;
+  async function handleAddToCart() {
+    try {
+        const response = await fetch('/api/cart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                productId: product.id,
+                quantity: 1
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to add item to cart.');
+        }
+
+        const result = await response.json();
+        await invalidateAll();
+        alert(`${name} added to cart! Quantity: ${result.quantity}`);
+    } catch (error: any) {
+        console.error('Error adding to cart:', error);
+        alert(`Error: ${error.message}`);
+    }
   }
 
-  // Reactive fallback for image loading e
-  // rrors
+
   $effect(() => {
     currentImageUrl = product.imageUrl || 'https://via.placeholder.com/600x400?text=No+Image+Available';
   });
@@ -84,8 +102,9 @@
         </div>
 
         <Button
+          style="submit"
           disabled={product.stockQuantity === 0}
-          onClick={() => console.log(`Add to cart: ${product.id} - ${product.name}`)}
+          onClick={handleAddToCart}
         >
           {product.stockQuantity > 0 ? 'Add to Cart' : 'Notify Me'}
         </Button>

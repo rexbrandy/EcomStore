@@ -1,19 +1,23 @@
 <script lang="ts">
   import { goto, invalidateAll } from '$app/navigation';
   import Button from '$lib/layout/Button.svelte';
-  import type { OrderWithItems } from '$lib/types'; // Import necessary types
+  import type { OrderWithItems } from '$lib/types';
   import { formatOrderStatus } from '$lib/common';
   import { getStatusColor } from '$lib/common';
   import { viewOrderDetails } from '$lib/common';
 
   let { data } = $props();
 
-  // Reactive states for account details form
-  let formName = $state(data.accountUser.name || '');
-  let formEmail = $state(data.accountUser.email || '');
-  let isUpdating = $state(false); // Loading state for update button
+  const intialForm = {
+    name: data.accountUser.name || '',
+    email: data.accountUser.email || '',
+    password: '',
+    confirm_password: ''
+  }
 
-  // Reactive state for orders list
+  let form = $state(intialForm);
+  let isUpdating = $state(false);
+
   const orders = $derived<OrderWithItems[]>(data.orders || []);
 
   async function handleSubmitUpdate(event: Event) {
@@ -26,10 +30,7 @@
       const response = await fetch('/api/account', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formName,
-          email: formEmail,
-        }),
+        body: JSON.stringify(form),
       });
 
       if (!response.ok) {
@@ -38,8 +39,8 @@
       }
 
       const updatedUser = await response.json();
+      console.log(updatedUser);
       alert('Account updated successfully!');
-      // Invalidate the /api/account endpoint to refresh current user data
       await invalidateAll();
     } catch (error: any) {
       console.error('Error updating account:', error);
@@ -59,13 +60,21 @@
       <form onsubmit={handleSubmitUpdate} class="space-y-4">
         <div>
           <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-          <input type="text" id="name" bind:value={formName} class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+          <input type="text" id="name" bind:value={form.name} class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"> 
         </div>
         <div>
           <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-          <input type="email" id="email" bind:value={formEmail} class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
+          <input type="email" id="email" bind:value={form.email} class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
         </div>
-        <Button type="submit" disabled={isUpdating} class="mt-4">
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+          <input type="password" id="password" placeholder="**********" bind:value={form.password} class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+        </div>
+        <div>
+          <label for="confirm_password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+          <input type="confirm_password" id="confirm_password" placeholder="**********" bind:value={form.confirm_password} class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+        </div>
+        <Button style="submit" type="submit" disabled={isUpdating} class="mt-4">
           {#if isUpdating}
             Saving...
           {:else}
@@ -79,7 +88,7 @@
       <h2 class="text-2xl font-bold mb-4">My Orders</h2>
       {#if orders.length === 0}
         <p class="text-gray-600">You haven't placed any orders yet.</p>
-        <Button onClick={() => goto('/')} class="mt-4">Start Shopping</Button>
+        <Button style="submit" onClick={() => goto('/')} class="mt-4">Start Shopping</Button>
       {:else}
         <div class="space-y-4">
           {#each orders as order (order.id)}
@@ -92,7 +101,7 @@
               </div>
               <p class="text-gray-700 text-sm mb-1">Date: {new Date(order.orderDate).toLocaleDateString()}</p>
               <p class="text-gray-700 text-sm mb-3">Total: <span class="font-bold">${order.totalAmount.toFixed(2)}</span> ({order.items.reduce((sum, item) => sum + item.quantity, 0)} items)</p>
-              <Button onClick={() => viewOrderDetails(order.id)}>View Details</Button>
+              <Button style="secondary" onClick={() => viewOrderDetails(order.id)}>View Details</Button>
             </div>
           {/each}
           <p class="mt-4 text-center">

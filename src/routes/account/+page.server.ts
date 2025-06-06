@@ -1,21 +1,19 @@
 // src/routes/account/+page.server.ts
 import type { PageServerLoad } from './$types';
 import { error, redirect } from '@sveltejs/kit';
-import type { AccountPageData } from '$lib/types'; // Import the new type
+import type { AccountPageData } from '$lib/types';
 
 export const load: PageServerLoad = async ({ fetch, locals }) => {
-    // Ensure the user is logged in
     if (!locals.user) {
-        throw redirect(302, '/auth/login?redirectTo=/account'); // Redirect to login
+        throw redirect(302, '/auth/login?redirectTo=/account'); 
     }
 
     let accountData: AccountPageData = {
-        user: {} as AccountPageData['user'], // Initialize with a dummy type
+        user: {} as AccountPageData['user'],
         orders: [],
     };
 
     try {
-        // Fetch account data (user details and orders) from your new API endpoint
         const response = await fetch('/api/account');
 
         if (!response.ok) {

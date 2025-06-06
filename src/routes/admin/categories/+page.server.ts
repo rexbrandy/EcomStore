@@ -1,4 +1,3 @@
-// src/routes/admin/categories/+page.server.ts
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import type { Category } from '@prisma/client';
@@ -7,7 +6,7 @@ export const load: PageServerLoad = async ({ fetch, locals }) => {
     let categories: Category[] = [];
 
     try {
-        const categoriesResponse = await fetch('/api/categories'); // Calls your GET /api/categories
+        const categoriesResponse = await fetch('/api/categories');
         if (!categoriesResponse.ok) {
             throw error(categoriesResponse.status, 'Failed to fetch categories for admin.');
         }

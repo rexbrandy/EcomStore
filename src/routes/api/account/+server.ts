@@ -2,6 +2,8 @@
 import prisma from '$lib/server/prisma';
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
+import bcrypt from 'bcrypt';
+import { PWORD_SALT_ROUNDS } from '$lib/common';
 
 // Helper to convert Decimal to number and parse JSON (reusable from previous work)
 function serializeOrderForUser(order: any) {
@@ -76,13 +78,14 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
   const userId = locals.user.id;
 
   try {
-    const { name, email } = await request.json();
+    const { name, email, password } = await request.json();
 
     // Basic validation
     if (name !== undefined && typeof name !== 'string') throw error(400, 'Name must be a string.');
     if (email !== undefined && (typeof email !== 'string' || !email.includes('@'))) throw error(400, 'Valid email is required.');
+    if (password !== undefined && typeof password !== 'string') throw error(400, 'Valid password is required.');
 
-    const dataToUpdate: { name?: string; email?: string } = {};
+    const dataToUpdate: { name?: string; email?: string; password?: string; } = {};
     if (name !== undefined) dataToUpdate.name = name;
     if (email !== undefined) {
       // Check if new email is already in use by another user
@@ -93,6 +96,9 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
         throw error(409, 'This email is already registered to another account.');
       }
       dataToUpdate.email = email;
+    }
+    if (password !== undefined) {
+      dataToUpdate.password = await bcrypt.hash(password, PWORD_SALT_ROUNDS);
     }
 
     if (Object.keys(dataToUpdate).length === 0) {

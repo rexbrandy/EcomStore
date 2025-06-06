@@ -1,7 +1,5 @@
-// prisma/schema.prisma
-
 datasource db {
-  provider = "sqlite" // Or "postgresql", "mysql" etc.
+  provider = "sqlite" 
   url      = env("DATABASE_URL")
 }
 
@@ -9,12 +7,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// --- User and Authentication ---
+
 model User {
   id        String     @id @default(cuid())
   email     String     @unique
   name      String?
-  password  String     // Hashed password
+  password  String     
   isAdmin   Boolean    @default(false)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
@@ -25,7 +23,7 @@ model User {
 }
 
 model Session {
-  id        String   @id @default(cuid()) // Session ID stored in cookie
+  id        String   @id @default(cuid()) 
   userId    String
   expiresAt DateTime
   createdAt DateTime @default(now())
@@ -35,11 +33,11 @@ model Session {
   @@index([userId])
 }
 
-// --- Products and Categories ---
+
 model Category {
   id          String    @id @default(cuid())
-  name        String    @unique // "Category can be anything" - admins can create diverse names
-  slug        String    @unique // For user-friendly URLs, generated from name
+  name        String    @unique 
+  slug        String    @unique 
   description String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -49,9 +47,9 @@ model Category {
 
 model Product {
   id             String   @id @default(cuid())
-  name           String   // "Product can be anything" - refers to diverse product offerings
+  name           String   
   description    String?
-  price          Decimal  // Use Decimal for currency
+  price          Decimal  
   imageUrl       String?
   stockQuantity  Int      @default(0)
   createdAt      DateTime @default(now())
@@ -64,10 +62,10 @@ model Product {
   orderItems OrderItem[]
 
   @@index([categoryId])
-  @@index([name]) // For searching by product name
+  @@index([name]) 
 }
 
-// --- Shopping Cart ---
+
 model CartItem {
   id        String   @id @default(cuid())
   quantity  Int
@@ -77,39 +75,39 @@ model CartItem {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade) // Cascade delete if product is removed
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade) 
 
-  @@unique([userId, productId]) // A user has one cart item per product; quantity is updated
+  @@unique([userId, productId]) 
   @@index([userId])
   @@index([productId])
 }
 
-// --- Orders / Purchase History ---
+
 enum OrderStatus {
-  PENDING     // Order created, awaiting payment
-  PAID        // Payment successful
-  PROCESSING  // Order is being processed
-  SHIPPED     // Order has been shipped
-  DELIVERED   // Order has been delivered
-  CANCELLED   // Order was cancelled
-  REFUNDED    // Order was refunded
+  PENDING     
+  PAID        
+  PROCESSING  
+  SHIPPED     
+  DELIVERED   
+  CANCELLED   
+  REFUNDED    
 }
 
 model Order {
   id              String      @id @default(cuid())
   orderDate       DateTime    @default(now())
-  totalAmount     Decimal     // Total amount for the order
+  totalAmount     Decimal     
   status          OrderStatus @default(PENDING)
-  shippingAddress Json?       // Store as JSON for simplicity, or create a separate Address model
-  billingAddress  Json?       // Store as JSON for simplicity
-  paymentIntentId String?     @unique // For payment gateway transaction reference
+  shippingAddress Json?       
+  billingAddress  Json?       
+  paymentIntentId String?     @unique 
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
-  items OrderItem[] // List of items in this order
+  items OrderItem[] 
 
   @@index([userId])
   @@index([status])
@@ -118,13 +116,13 @@ model Order {
 model OrderItem {
   id              String  @id @default(cuid())
   quantity        Int
-  priceAtPurchase Decimal // Price of the single item at the time of purchase
+  priceAtPurchase Decimal 
 
   orderId   String
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict) // Prevent product deletion if it's in an order, or handle appropriately
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict) 
 
   @@index([orderId])
   @@index([productId])

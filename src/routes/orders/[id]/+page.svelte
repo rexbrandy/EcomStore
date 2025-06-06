@@ -9,20 +9,8 @@
 
   const order = $derived<OrderWithItems>(data.order);
 
-  // CORRECTED: No JSON.parse() needed here. Prisma already deserializes it.
   let shippingAddressParsed = $derived(order?.shippingAddress || null); 
   let billingAddressParsed = $derived(order?.billingAddress || null); 
-
-  function formatAddress(address: any) {
-    if (!address) return 'N/A';
-    // Ensure address properties exist, as they might be optional in your JSON schema
-    return `
-      ${address.address1 || ''}
-      ${address.address2 ? address.address2 + '\n' : ''}
-      ${address.city || ''}, ${address.state || ''} ${address.postalCode || ''}
-      ${address.country || ''}
-    `.trim();
-  }
 
   let statusColor = $derived(() => {
     switch (order?.status) {
@@ -67,9 +55,15 @@
           <p class="text-700">Email: {order.user.email}</p>
         </div>
       </div>
-
-      <h2 class="text-xl font-semibold text-gray-800 mb-4">Shipping Address</h2>
-      <pre class="bg-gray-50 p-4 rounded-md text-gray-700 text-sm mb-6">{formatAddress(shippingAddressParsed)}</pre>
+      <div class="mb-4">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Shipping Address</h2>
+        <p class="text-gray-700">Address Line 1: {shippingAddressParsed.address1}</p>
+        <p class="text-gray-700">Address Line 2: {shippingAddressParsed.address2}</p>
+        <p class="text-gray-700">City: {shippingAddressParsed.city}</p>
+        <p class="text-gray-700">Country: {shippingAddressParsed.country}</p>
+        <p class="text-gray-700">Postcode: {shippingAddressParsed.postalCode}</p>
+        <p class="text-gray-700">State: {shippingAddressParsed.postalCode}</p>
+      </div>
 
       {#if billingAddressParsed && JSON.stringify(shippingAddressParsed) !== JSON.stringify(billingAddressParsed)}
         <h2 class="text-xl font-semibold text-gray-800 mb-4">Billing Address</h2>
@@ -95,18 +89,18 @@
       </div>
 
       <div class="mt-8 flex justify-end">
-        <Button onClick={handleReorder}>Reorder This Order</Button>
+        <Button style="submit" onClick={handleReorder}>Reorder This Order</Button>
       </div>
     </div>
   {:else if data.user}
     <div class="text-center py-12">
       <p class="text-xl text-gray-600 mb-4">Order not found or you don't have permission to view it.</p>
-      <Button onClick={() => goto('/orders')}>View All Orders</Button>
+      <Button style="submit" onClick={() => goto('/orders')}>View All Orders</Button>
     </div>
   {:else}
     <div class="text-center py-12">
       <p class="text-xl text-gray-600 mb-4">You need to log in to view this order.</p>
-      <Button onClick={() => goto(`/auth/login?redirectTo=/orders/`)}>Log In</Button>
+      <Button style="submit" onClick={() => goto(`/auth/login?redirectTo=/orders/`)}>Log In</Button>
     </div>
   {/if}
 </div>

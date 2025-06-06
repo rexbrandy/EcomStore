@@ -3,16 +3,14 @@ import prisma from '$lib/server/prisma';
 import { json, error } from '@sveltejs/kit';
 import bcrypt from 'bcrypt';
 import type { RequestHandler } from '@sveltejs/kit';
+import { PWORD_SALT_ROUNDS } from '$lib/common';
 
-const SALT_ROUNDS = 10;
+const SALT_ROUNDS = PWORD_SALT_ROUNDS;
 
 export const POST: RequestHandler = async ({ request }) => {
   try {
     // Change from request.json() to request.formData()
-    const formData = await request.formData();
-    const email = formData.get('email') as string | null;
-    const password = formData.get('password') as string | null;
-    const name = formData.get('name') as string | null; // This will be an empty string if submitted empty, or null if not present
+    const { name, email, password } = await request.json(); // This will be an empty string if submitted empty, or null if not present
 
     // Basic validation
     if (!email || typeof email !== 'string' || !/^\S+@\S+\.\S+$/.test(email)) {

@@ -1,29 +1,26 @@
 <script lang="ts">
   import { invalidateAll, goto } from '$app/navigation';
   import Button from '$lib/layout/Button.svelte';
-  import type { AdminUser, AdminUserDetail } from '$lib/types'; // Import AdminUser and AdminUserDetail
+  import type { AdminUser, AdminUserDetail } from '$lib/types';
   import { page } from '$app/state';
+	import { formatDate } from '$lib/common.js';
 
   let { data } = $props();
 
-  // Reactive states initialized from data prop
   let users = $state<AdminUser[]>(data.users);
   let currentPage = $state(data.currentPage);
   let totalPages = $state(data.totalPages);
   let totalUsers = $state(data.totalUsers);
   let searchTerm = $state(data.searchTerm);
 
-  // State for View/Edit User Modal
   let showUserDetailModal = $state(false);
   let currentUserDetail: AdminUserDetail | null = $state(null);
-  let isUpdatingUser = $state(false); // For loading state in update form
+  let isUpdatingUser = $state(false);
 
-  // Form fields for editing
   let formName = $state('');
   let formEmail = $state('');
   let formIsAdmin = $state(false);
 
-  // Update reactive states when data changes (e.g. from invalidation)
   $effect(() => {
     users = data.users;
     currentPage = data.currentPage;
@@ -54,15 +51,13 @@
 
   async function openUserDetailModal(userId: string) {
     try {
-      const response = await fetch(`/api/admin/users/${userId}`); // Fetch single user details
+      const response = await fetch(`/api/admin/users/${userId}`);
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to fetch user details.');
       }
       currentUserDetail = await response.json();
 
-      console.log(currentUserDetail);
-      // Initialize form fields for editing
       formName = currentUserDetail?.name || '';
       formEmail = currentUserDetail?.email || '';
       formIsAdmin = currentUserDetail?.isAdmin || false;
@@ -102,7 +97,6 @@
 
       alert('User updated successfully!');
       closeUserDetailModal();
-      // Invalidate the /api/admin/users endpoint to refresh the list
       await invalidateAll(); 
     } catch (error: any) {
       console.error('Error updating user:', error);
@@ -110,17 +104,6 @@
     } finally {
       isUpdatingUser = false;
     }
-  }
-
-  // Helper to format date
-  function formatDate(dateString: string) {
-    return new Date(dateString).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   }
 
 </script>
@@ -143,10 +126,10 @@
       />
     </div>
     <div>
-      <Button onClick={() => applyFiltersAndPagination()}>Apply Filters</Button>
+      <Button style="submit" onClick={() => applyFiltersAndPagination()}>Apply Filters</Button>
     </div>
     <div>
-      <Button onClick={() => {
+      <Button style="secondary" onClick={() => {
         searchTerm = '';
         applyFiltersAndPagination();
       }}>Reset Filters</Button>
@@ -189,7 +172,7 @@
               <td class="py-3 px-4 text-sm text-gray-700">{user._count.sessions}</td>
               <td class="py-3 px-4 text-sm text-gray-700">{new Date(user.createdAt).toLocaleDateString()}</td>
               <td class="py-3 px-4 space-x-2 flex">
-                <Button onClick={() => openUserDetailModal(user.id)}>View/Edit</Button>
+                <Button style="submit" onClick={() => openUserDetailModal(user.id)}>View/Edit</Button>
                 </td>
             </tr>
           {/each}
@@ -251,8 +234,8 @@
 
 
         <div class="flex justify-end space-x-3 mt-6">
-          <Button type="button" onClick={closeUserDetailModal} disabled={isUpdatingUser}>Cancel</Button>
-          <Button type="submit" disabled={isUpdatingUser}>
+          <Button style="secondary" type="button" onClick={closeUserDetailModal} disabled={isUpdatingUser}>Cancel</Button>
+          <Button style="submit" type="submit" disabled={isUpdatingUser}>
             {#if isUpdatingUser}
               Saving...
             {:else}
